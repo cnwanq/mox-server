@@ -1,0 +1,154 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id Int @id @default(autoincrement())
+  code String @unique
+  name String @unique
+  domain String
+  owner User @relation(fields: [ownerId], references: [id])
+  ownerId Int @map("owner_id")
+  status Int @default(0)
+  createdTime DateTime @default(now()) @map("created_time")
+  updatedTime DateTime @updatedAt @map("updated_time")
+  deletedTime DateTime? @map("deleted_time")
+
+   @@map("sys_tenant")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  username String @unique
+  password String
+  email String @unique
+  salt String
+  tenantId Int? @map("tenant_id")
+  status Int @default(0)
+  createdTime DateTime @default(now()) @map("created_time")
+  updatedTime DateTime @updatedAt @map("updated_time")
+  deletedTime DateTime? @map("deleted_time")
+
+  tenants Tenant[]
+
+  @@index([email])
+  @@map("sys_user")
+}
+
+model Role {
+  id Int @id @default(autoincrement())
+  code String
+  name String
+  description String
+  tenantId Int? @map("tenant_id")
+  createdTime DateTime @default(now()) @map("created_time")
+  updatedTime DateTime @updatedAt @map("updated_time")
+
+  @@map("sys_role")
+}
+
+model UserRole {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  roleId Int @map("role_id")
+
+  @@map("sys_user_role_ref")
+}
+
+model Menu {
+  id Int @id @default(autoincrement())
+  code String
+  name String
+  path String
+  description String
+  parent Int
+  order Int
+  tenantId Int? @map("tenant_id")
+  createdTime DateTime @default(now()) @map("created_time")
+  updatedTime DateTime @updatedAt @map("updated_time")
+
+  @@map("sys_menu")
+}
+
+model RoleMenu {
+  id Int @id @default(autoincrement())
+  roleId Int @map("role_id")
+  menuId Int @map("menu_id")
+
+  @@map("sys_role_menu_ref")
+}
+
+model Permission {
+  id Int @id @default(autoincrement())
+  code String
+  name String
+  description String
+  type String
+  scope String
+  tenantId Int? @map("tenant_id")
+  createdTime DateTime @default(now()) @map("created_time")
+  updatedTime DateTime @updatedAt @map("updated_time")
+
+  @@map("sys_permission")
+}
+
+model RolePermission {
+  id Int @id @default(autoincrement())
+  roleId Int @map("role_id")
+  permissionId Int @map("permission_id")
+
+  @@map("sys_role_permission_ref")
+}
+
+model Meta {
+  id Int @id @default(autoincrement())
+  code String
+  name String
+  description String
+  values MetaValue[]
+  tenantId Int? @map("tenant_id")
+  createdTime DateTime @default(now()) @map("created_time")
+  updatedTime DateTime @updatedAt @map("updated_time")
+
+  @@map("sys_meta")
+}
+
+
+model MetaValue {
+  id Int @id @default(autoincrement())
+  code String
+  name String
+  description String
+  meta Meta @relation(fields: [metaId], references: [id])
+  metaId Int @map("meta_id")
+  tenantId Int? @map("tenant_id")
+  createdTime DateTime @default(now()) @map("created_time")
+  updatedTime DateTime @updatedAt @map("updated_time")
+
+  @@map("sys_meta_value")
+}
+
+model Auth {
+  id Int @id @default(autoincrement())
+  userId Int
+  token String @db.Text
+  refreshToken String @db.Text @map("refresh_token")
+  deviceType String? @map("device_type")
+  userAgent String? @map("user_agent")
+  status Int? @default(1)
+  createdTime DateTime @default(now()) @map("created_time")
+  updatedTime DateTime @updatedAt @map("updated_time")
+
+  @@map("sys_auth")
+}
